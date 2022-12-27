@@ -1,403 +1,472 @@
----
-# try also 'default' to start simple
-theme: seriph
-# random image from a curated Unsplash collection by Anthony
-# like them? see https://unsplash.com/collections/94734566/slidev
-background: https://source.unsplash.com/collection/94734566/1920x1080
-# apply any windi css classes to the current slide
-class: 'text-center'
-# https://sli.dev/custom/highlighters.html
-highlighter: shiki
-# show line numbers in code blocks
-lineNumbers: false
-# some information about the slides, markdown enabled
-info: |
-  ## Slidev Starter Template
-  Presentation slides for developers.
+# Abstract Factory
 
-  Learn more at [Sli.dev](https://sli.dev)
-# persist drawings in exports and build
-drawings:
-  persist: false
-# use UnoCSS
-css: unocss
+**18125118 Phan Pham Thanh Tuyen**
+<footer class="absolute bottom-0 right-0 p-2 text-sm">This slide is powered by <a href="https://sli.dev/">Sli<b>dev</b></a> which will give a better experience if being run on its own server</footer>
+
 ---
 
-# Welcome to Slidev
+# Abstract Factory
 
-Presentation slides for developers
+- Is a creational design pattern
+- Provides an interface for creating families of related objects without specifying their concrete classes
+- The new operator considered harmful
 
-<div class="pt-12">
-  <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
-    Press Space for next page <carbon:arrow-right class="inline"/>
-  </span>
+---
+
+# Problem
+
+- Imagine that we want to create cross-platform UI elements
+- It requires that those elements must work the same way under arbitrary operating systems
+- Let's say we define a general UI element class that has a pure virtual method called `render()`
+- Its concrete UI subclasses override the `render()` method
+- In this representation, we consider the `Checkbox` and `Button` classes as UI elements
+
+---
+layout: two-cols
+---
+
+# Naive Solution
+
+```cpp{all|4-8|10-15|17-22|all}
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Button {
+public:
+  virtual void render() = 0;
+};
+
+class WindowsButton : public Button {
+public:
+  void render() {
+      cout << "WindowsButton is rendered" << endl;
+  }
+};
+
+class MacButton : public Button {
+public:
+  void render() {
+      cout << "MacButton is rendered" << endl;
+  }
+};
+```
+
+::right::
+
+<div class="mt-14 ml-4">
+
+```cpp{all|1-4|6-11|12-18|all}
+class Checkbox {
+public:
+  virtual void render() = 0;
+};
+
+class WindowsCheckbox : public Checkbox {
+public:
+  void render() {
+      cout << "WindowsCheckbox is rendered" << endl;
+  }
+};
+
+class MacCheckbox : public Checkbox {
+public:
+  void render() {
+      cout << "MacCheckbox is rendered" << endl;
+  }
+};
+```
+
 </div>
 
-<div class="abs-br m-6 flex gap-2">
-  <button @click="$slidev.nav.openInEditor()" title="Open in Editor" class="text-xl icon-btn opacity-50 !border-none !hover:text-white">
-    <carbon:edit />
-  </button>
-  <a href="https://github.com/slidevjs/slidev" target="_blank" alt="GitHub"
-    class="text-xl icon-btn opacity-50 !border-none !hover:text-white">
-    <carbon-logo-github />
-  </a>
+---
+
+# Naive Solution
+
+```cpp{all|3|4-10,21-24|all}
+int main()
+{
+  string OS = "WINDOWS";
+  if (OS == "WINDOWS") {
+    cout << "Render WindowsForm" << endl;
+    Button* windowsButton = new WindowsButton();
+    windowsButton->render();
+    Checkbox* windowsCheckbox = new WindowsCheckbox();
+    windowsCheckbox->render();
+  }
+  else if (OS == 'MAC') {
+    cout << "Render MacForm" << endl;
+    Button* macButton = new MacButton();
+    macButton->render();
+    Checkbox* macCheckbox = new MacCheckbox();
+    macCheckbox->render();
+  }
+
+  return 0;
+}
+
+// Render WindowsForm
+// WindowsButton is rendered
+// WindowsCheckbox is rendered
+```
+
+---
+
+# Issue with Naive Solution
+
+- The client needs to know details of each Button's or Checkbox's subclasses
+- The client ends up chaining new `else if`(s) to create new buttons or checkboxes for new operating systems
+<uil-arrow-right /> Each time a new change is made at the library side, the client would need to make some corresponding changes at its end
+- The consistency of the UI elements is not guaranteed
+
+---
+layout: two-cols
+---
+
+# Abstract Factory Solution
+
+```cpp{all|4-7|9-14|16-21|all}
+#include <iostream>
+using namespace std;
+
+class Button {
+public:
+  virtual void render() = 0;
+};
+
+class WindowsButton : public Button {
+public:
+  void render() {
+    cout << "WindowsButton is rendered" << endl;
+  }
+};
+
+class MacButton : public Button {
+public:
+  void render() {
+    cout << "MacButton is rendered" << endl;
+  }
+};
+```
+
+::right::
+
+<div class="mt-14 ml-4">
+
+```cpp{all|1-4|6-11|12-18|all}
+class Checkbox {
+public:
+  virtual void render() = 0;
+};
+
+class WindowsCheckbox : public Checkbox {
+public:
+  void render() {
+      cout << "WindowsCheckbox is rendered" << endl;
+  }
+};
+
+class MacCheckbox : public Checkbox {
+public:
+  void render() {
+      cout << "MacCheckbox is rendered" << endl;
+  }
+};
+```
+
 </div>
 
-<!--
-The last comment block of each slide will be treated as slide notes. It will be visible and editable in Presenter Mode along with the slide. [Read more in the docs](https://sli.dev/guide/syntax.html#notes)
--->
-
+---
+layout: two-cols
 ---
 
-# What is Slidev?
+# Abstract Factory Solution
 
-Slidev is a slides maker and presenter designed for developers, consist of the following features
+```cpp{all|1-5|7-15|17-25|all}
+class UIFactory {
+public:
+  virtual Button* createButton() = 0;
+  virtual Checkbox* createCheckbox() = 0;
+};
 
-- 📝 **Text-based** - focus on the content with Markdown, and then style them later
-- 🎨 **Themable** - theme can be shared and used with npm packages
-- 🧑‍💻 **Developer Friendly** - code highlighting, live coding with autocompletion
-- 🤹 **Interactive** - embedding Vue components to enhance your expressions
-- 🎥 **Recording** - built-in recording and camera view
-- 📤 **Portable** - export into PDF, PNGs, or even a hostable SPA
-- 🛠 **Hackable** - anything possible on a webpage
+class WindowsFactory : public UIFactory {
+public:
+  Button* createButton() {
+    return new WindowsButton();
+  }
+  Checkbox* createCheckbox() {
+    return new WindowsCheckbox();
+  }
+};
 
-<br>
-<br>
+class MacFactory : public UIFactory {
+public:
+  Button* createButton() {
+    return new MacButton();
+  }
+  Checkbox* createCheckbox() {
+    return new MacCheckbox();
+  }
+};
+```
 
-Read more about [Why Slidev?](https://sli.dev/guide/why)
+::right::
 
-<!--
-You can have `style` tag in markdown to override the style for the current page.
-Learn more: https://sli.dev/guide/syntax#embedded-styles
--->
+<div class="ml-4 mt-14">
 
-<style>
-h1 {
-  background-color: #2B90B6;
-  background-image: linear-gradient(45deg, #4EC5D4 10%, #146b8c 20%);
-  background-size: 100%;
-  -webkit-background-clip: text;
-  -moz-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  -moz-text-fill-color: transparent;
-}
-</style>
-
-<!--
-Here is another comment.
--->
-
----
-
-# Navigation
-
-Hover on the bottom-left corner to see the navigation's controls panel, [learn more](https://sli.dev/guide/navigation.html)
-
-### Keyboard Shortcuts
-
-|     |     |
-| --- | --- |
-| <kbd>right</kbd> / <kbd>space</kbd>| next animation or slide |
-| <kbd>left</kbd>  / <kbd>shift</kbd><kbd>space</kbd> | previous animation or slide |
-| <kbd>up</kbd> | previous slide |
-| <kbd>down</kbd> | next slide |
-
-<!-- https://sli.dev/guide/animations.html#click-animations -->
-<img
-  v-click
-  class="absolute -bottom-9 -left-7 w-80 opacity-50"
-  src="https://sli.dev/assets/arrow-bottom-left.svg"
-/>
-<p v-after class="absolute bottom-23 left-45 opacity-30 transform -rotate-10">Here!</p>
-
----
-layout: image-right
-image: https://source.unsplash.com/collection/94734566/1920x1080
----
-
-# Code
-
-Use code snippets and get the highlighting directly![^1]
-
-```ts {all|2|1-6|9|all}
-interface User {
-  id: number
-  firstName: string
-  lastName: string
-  role: string
+```cpp{all|1-4|7,14|8|9|2-3,15-16|all}
+void ClientCode(const Factory& factory) {
+  factory.createButton()->render();
+  factory.createCheckbox()->render();
 }
 
-function updateUser(id: number, update: User) {
-  const user = getUser(id)
-  const newUser = { ...user, ...update }
-  saveUser(id, newUser)
+int main() {
+  cout << "Render UIWindows";
+  Factory* windowsFactory = new WindowsFactory();
+  ClientCode(*windowsFactory);
+  delete windowsFactory;
+  return 0;
+}
+
+// Render UIWindows
+// WindowsButton is rendered
+// WindowsCheckbox is rendered
+```
+
+</div>
+
+---
+
+# Discussion
+
+- With this pattern, the client code only needs to interact with these objects via their abstract interfaces and is not dependent on the concrete classes of factories and UI components
+- Additionally, this enables the client code to accommodate any future additions of factories or UI components.
+- Each time we add a new variety of UI elements to the app, we don't need to change the client code
+- Later, if we want to support Linux operating systems, we only need to make a new factory class that and slightly alter the initialization code of the app
+
+---
+
+# General Solution
+
+- List products and its variants
+- Define abstract product interfaces for all product types, then make all concrete product classes implement these interfaces
+- Declare the abstract factory interface with a set of creation methods for all abstract products
+- Implement a set of concrete factory classes, one for each product variant
+- Create factory initialization code
+- Replace product constructors with calls to the appropriate creation method on the factory object
+
+---
+
+# General Class Diagram
+
+```mermaid {theme: 'neutral'}
+classDiagram
+  ConcreteFactory1 ..|> Factory
+  ConcreteFactory2 ..|> Factory
+  ConcreteProductA1 --|> ProductA
+  ConcreteProductA2 --|> ProductA
+  ConcreteProductB1 --|> ProductB
+  ConcreteProductB2 --|> ProductB
+  ConcreteFactory1 ..> ConcreteProductA1
+  ConcreteFactory1 ..> ConcreteProductB1
+  ConcreteFactory2 ..> ConcreteProductA2
+  ConcreteFactory2 ..> ConcreteProductB2
+  <<interface>> Factory
+
+  class ConcreteFactory1 {
+    ...
+    + createProductA(): ProductA
+    + createProductB(): ProductB
+  }
+
+  class ConcreteFactory2 {
+    ...
+    + createProductA(): ProductA
+    + createProductB(): ProductB
+  }
+
+  class Factory {
+    + createProductA(): ProductA
+    + createProductB(): ProductB
+  }
+```
+
+---
+
+# Class Diagram of the Problem
+
+```mermaid {theme: 'neutral'}
+classDiagram
+  WindowsFactory ..|> UIFactory
+  MacFactory ..|> UIFactory
+  MacCheckbox --|> Checkbox
+  WindowsCheckbox --|> Checkbox
+  MacButton --|> Button
+  WindowsButton --|> Button
+  WindowsFactory ..> WindowsCheckbox
+  MacFactory ..> MacCheckbox
+  WindowsFactory ..> WindowsButton
+  MacFactory ..> MacButton
+  <<interface>> UIFactory
+
+  class MacFactory {
+    ...
+    + createButton(): Button
+    + createCheckbox(): Checkbox
+  }
+
+  class WindowsFactory {
+    ...
+    + createButton(): Button
+    + createCheckbox(): Checkbox
+  }
+
+  class UIFactory {
+    + createButton(): Button
+    + createCheckbox(): Checkbox
+  }
+```
+
+---
+layout: two-cols
+---
+
+# General Code Example <uil-java-script class="text-yellow-400" />
+
+```ts {all|1-4|6-14|16-24|all}
+interface AbstractFactory {
+    createProductA(): AbstractProductA;
+    createProductB(): AbstractProductB;
+}
+
+class ConcreteFactory1 implements AbstractFactory {
+    public createProductA(): AbstractProductA {
+        return new ConcreteProductA1();
+    }
+
+    public createProductB(): AbstractProductB {
+        return new ConcreteProductB1();
+    }
+}
+
+class ConcreteFactory2 implements AbstractFactory {
+    public createProductA(): AbstractProductA {
+        return new ConcreteProductA2();
+    }
+
+    public createProductB(): AbstractProductB {
+        return new ConcreteProductB2();
+    }
 }
 ```
 
-<arrow v-click="3" x1="400" y1="420" x2="230" y2="330" color="#564" width="3" arrowSize="1" />
+::right::
 
-[^1]: [Learn More](https://sli.dev/guide/syntax.html#line-highlighting)
+<div class="mt-14 ml-4">
 
-<style>
-.footnotes-sep {
-  @apply mt-20 opacity-10;
+```ts {all|1-3|5-9|11-15|all}
+interface AbstractProductA {
+  someOperationA(): string;
 }
-.footnotes {
-  @apply text-sm opacity-75;
-}
-.footnote-backref {
-  display: none;
-}
-</style>
 
----
-
-# Components
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-You can use Vue components directly inside your slides.
-
-We have provided a few built-in components like `<Tweet/>` and `<Youtube/>` that you can use directly. And adding your custom components is also super easy.
-
-```html
-<Counter :count="10" />
-```
-
-<!-- ./components/Counter.vue -->
-<Counter :count="10" m="t-4" />
-
-Check out [the guides](https://sli.dev/builtin/components.html) for more.
-
-</div>
-<div>
-
-```html
-<Tweet id="1390115482657726468" />
-```
-
-<Tweet id="1390115482657726468" scale="0.65" />
-
-</div>
-</div>
-
-<!--
-Presenter note with **bold**, *italic*, and ~~striked~~ text.
-
-Also, HTML elements are valid:
-<div class="flex w-full">
-  <span style="flex-grow: 1;">Left content</span>
-  <span>Right content</span>
-</div>
--->
-
-
----
-class: px-20
----
-
-# Themes
-
-Slidev comes with powerful theming support. Themes can provide styles, layouts, components, or even configurations for tools. Switching between themes by just **one edit** in your frontmatter:
-
-<div grid="~ cols-2 gap-2" m="-t-2">
-
-```yaml
----
-theme: default
----
-```
-
-```yaml
----
-theme: seriph
----
-```
-
-<img border="rounded" src="https://github.com/slidevjs/themes/blob/main/screenshots/theme-default/01.png?raw=true">
-
-<img border="rounded" src="https://github.com/slidevjs/themes/blob/main/screenshots/theme-seriph/01.png?raw=true">
-
-</div>
-
-Read more about [How to use a theme](https://sli.dev/themes/use.html) and
-check out the [Awesome Themes Gallery](https://sli.dev/themes/gallery.html).
-
----
-preload: false
----
-
-# Animations
-
-Animations are powered by [@vueuse/motion](https://motion.vueuse.org/).
-
-```html
-<div
-  v-motion
-  :initial="{ x: -80 }"
-  :enter="{ x: 0 }">
-  Slidev
-</div>
-```
-
-<div class="w-60 relative mt-6">
-  <div class="relative w-40 h-40">
-    <img
-      v-motion
-      :initial="{ x: 800, y: -100, scale: 1.5, rotate: -50 }"
-      :enter="final"
-      class="absolute top-0 left-0 right-0 bottom-0"
-      src="https://sli.dev/logo-square.png"
-    />
-    <img
-      v-motion
-      :initial="{ y: 500, x: -100, scale: 2 }"
-      :enter="final"
-      class="absolute top-0 left-0 right-0 bottom-0"
-      src="https://sli.dev/logo-circle.png"
-    />
-    <img
-      v-motion
-      :initial="{ x: 600, y: 400, scale: 2, rotate: 100 }"
-      :enter="final"
-      class="absolute top-0 left-0 right-0 bottom-0"
-      src="https://sli.dev/logo-triangle.png"
-    />
-  </div>
-
-  <div
-    class="text-5xl absolute top-14 left-40 text-[#2B90B6] -z-1"
-    v-motion
-    :initial="{ x: -80, opacity: 0}"
-    :enter="{ x: 0, opacity: 1, transition: { delay: 2000, duration: 1000 } }">
-    Slidev
-  </div>
-</div>
-
-<!-- vue script setup scripts can be directly used in markdown, and will only affects current page -->
-<script setup lang="ts">
-const final = {
-  x: 0,
-  y: 0,
-  rotate: 0,
-  scale: 1,
-  transition: {
-    type: 'spring',
-    damping: 10,
-    stiffness: 20,
-    mass: 2
+class ConcreteProductA1 implements AbstractProductA {
+  public someOperationA(): string {
+    return 'The result of the product A1.';
   }
 }
-</script>
 
-<div
-  v-motion
-  :initial="{ x:35, y: 40, opacity: 0}"
-  :enter="{ y: 0, opacity: 1, transition: { delay: 3500 } }">
+class ConcreteProductA2 implements AbstractProductA {
+  public someOperationA(): string {
+    return 'The result of the product A2.';
+  }
+}
+```
 
-[Learn More](https://sli.dev/guide/animations.html#motion)
+</div>
+
+---
+layout: two-cols
+---
+
+# General Code Example <uil-java-script class="text-yellow-400" />
+
+```ts{all|1-4|5-13|14-22|all}
+interface AbstractProductB {
+  someOperationB(): string;
+  someOperationBonA(productA: AbstractProductA): string;
+}
+class ConcreteProductB1 implements AbstractProductB {
+  public someOperationB(): string {
+    return 'The result of the product B1.';
+  }
+  public someOperationBonA(productA: AbstractProductA): string {
+    const result = productA.someOperationA();
+    return `The result of the B1 with the (${result})`;
+  }
+}
+class ConcreteProductB2 implements AbstractProductB {
+  public someOperationB(): string {
+    return 'The result of the product B2.';
+  }
+  public someOperationBonA(productA: AbstractProductA): string {
+    const result = productA.someOperationA();
+    return `The result of the B2 with the (${result})`;
+  }
+}
+```
+
+::right::
+
+<div class="mt-14 ml-4">
+
+```ts{all|1-7|all}
+function clientCode(factory: AbstractFactory) {
+  const productA = factory.createProductA();
+  const productB = factory.createProductB();
+
+  console.log(productB.someOperationB());
+  console.log(productB.someOperationBonA(productA));
+}
+
+console.log('Client: Testing client code with the first factory type...');
+clientCode(new ConcreteFactory1());
+console.log('');
+console.log('Client: Testing the same client code with the second factory type...');
+clientCode(new ConcreteFactory2());
+
+// Client: Testing client code with the first factory type...
+// The result of the product B1.
+// The result of the B1 with the (The result of the product A1.)
+
+// Client: Testing the same client code with the second factory type...
+// The result of the product B2.
+// The result of the B2 with the (The result of the product A2.)
+```
 
 </div>
 
 ---
 
-# LaTeX
+# When to use
 
-LaTeX is supported out-of-box powered by [KaTeX](https://katex.org/).
-
-<br>
-
-Inline $\sqrt{3x-1}+(1+x)^2$
-
-Block
-$$
-\begin{array}{c}
-
-\nabla \times \vec{\mathbf{B}} -\, \frac1c\, \frac{\partial\vec{\mathbf{E}}}{\partial t} &
-= \frac{4\pi}{c}\vec{\mathbf{j}}    \nabla \cdot \vec{\mathbf{E}} & = 4 \pi \rho \\
-
-\nabla \times \vec{\mathbf{E}}\, +\, \frac1c\, \frac{\partial\vec{\mathbf{B}}}{\partial t} & = \vec{\mathbf{0}} \\
-
-\nabla \cdot \vec{\mathbf{B}} & = 0
-
-\end{array}
-$$
-
-<br>
-
-[Learn more](https://sli.dev/guide/syntax#latex)
+- Need to interact with different families of related products
+- Do not know beforehand the exact types and dependencies of the objects
+- Allow for future extensibility
+- Not want to worry about the consistency of the products
+- A class has a set of Factory Methods that obscure its main function
 
 ---
 
-# Diagrams
-
-You can create diagrams / graphs from textual descriptions, directly in your Markdown.
-
-<div class="grid grid-cols-3 gap-10 pt-4 -mb-6">
-
-```mermaid {scale: 0.5}
-sequenceDiagram
-    Alice->John: Hello John, how are you?
-    Note over Alice,John: A typical interaction
-```
-
-```mermaid {theme: 'neutral', scale: 0.8}
-graph TD
-B[Text] --> C{Decision}
-C -->|One| D[Result 1]
-C -->|Two| E[Result 2]
-```
-
-```plantuml {scale: 0.7}
-@startuml
-
-package "Some Group" {
-  HTTP - [First Component]
-  [Another Component]
-}
-
-node "Other Groups" {
-  FTP - [Second Component]
-  [First Component] --> FTP
-}
-
-cloud {
-  [Example 1]
-}
-
-
-database "MySql" {
-  folder "This is my folder" {
-    [Folder 3]
-  }
-  frame "Foo" {
-    [Frame 4]
-  }
-}
-
-
-[Another Component] --> [Example 1]
-[Example 1] --> [Folder 3]
-[Folder 3] --> [Frame 4]
-
-@enduml
-```
-
-</div>
-
-[Learn More](https://sli.dev/guide/syntax.html#diagrams)
+# Pros and Cons
+<uim-check class="text-green-400" /> Ensure the consistency between products<br /><br />
+<uim-check class="text-green-400" /> Avoid tight coupling between the products and the client code<br /><br />
+<uim-check class="text-green-400" /> Single Responsibility Principle: move the product creation code into one place in the program<br /><br />
+<uim-check class="text-green-400" /> Open/Closed Principle: introduce new types of products into the program without breaking existing client<br /><br />
+<br />
+<uim-multiply class="text-red-400" /> The code may become more complicated since many new subclasses are introduced
 
 ---
-src: ./pages/multiple-entries.md
-hide: false
----
 
----
-layout: center
-class: text-center
----
+# References
 
-# Learn More
-
-[Documentations](https://sli.dev) · [GitHub](https://github.com/slidevjs/slidev) · [Showcases](https://sli.dev/showcases.html)
+- Refactoring Guru: https://refactoring.guru/design-patterns/abstract-factory
